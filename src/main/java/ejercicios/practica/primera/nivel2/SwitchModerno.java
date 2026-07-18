@@ -9,5 +9,7 @@ Restricción: debe usar la sintaxis moderna de switch (no el clásico con break)
 package ejercicios.practica.primera.nivel2;
 
 public class SwitchModerno {
-
+    public static void main(String[] args) {
+        System.out.println("proximante");
+    }
 }
