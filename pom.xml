@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>daily.projects</groupId>
-    <artifactId>daily_projects</artifactId>
+    <artifactId>daily_notes</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
