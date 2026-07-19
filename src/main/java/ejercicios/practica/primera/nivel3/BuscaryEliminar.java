@@ -13,7 +13,7 @@ import java.util.List;
 
 public class BuscaryEliminar {
     public static void main(String[] args) {
-        List <String> lista = new ArrayList();
+        List <String> lista = new ArrayList<>();
         lista.add("juan");
         lista.add("juan");
         lista.add("juan");
