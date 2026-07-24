@@ -1,6 +1,7 @@
 package ejercicios.practica.primera.proyecto;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Libreria {
     List<Libro> biblioteca = new ArrayList<>();
@@ -21,9 +22,8 @@ public class Libreria {
                 "\nTitulo: " + libro.title() +
                 "\nAutor: " + libro.autor() +
                 "\nYear: " + libro.year() +
-                "\nPrestamo: " + libro.availability() +
+                "\nDisponible: " + (libro.availability() ? "Si" : "No") +
                 "\n-----------------------------\n";
-
     }
 
     public void buscarPorAutor(){
@@ -31,12 +31,13 @@ public class Libreria {
         while (salir) {
             listaDeAutores();
             System.out.println("Introduce el Autor: ");
-            String autor = sc.nextLine();
-            if (autor.isEmpty() || biblioteca.stream().noneMatch(libro -> libro.autor().equals(autor))) {
+            String autor = sc.nextLine().toLowerCase();
+            if (autor.isEmpty() || biblioteca.stream()
+                    .noneMatch(libro -> libro.autor().toLowerCase(Locale.ROOT).equals(autor))){
                 System.out.println("El Autor --- " + autor + " --- no existe");
             }else{
                 biblioteca.stream()
-                        .filter(libro -> libro.autor().equals(autor))
+                        .filter(libro -> libro.autor().toLowerCase(Locale.ROOT).equals(autor))
                         .forEach(libro -> System.out.println(this.infoLibro(libro)));
                 salir = false;
             }
@@ -60,13 +61,13 @@ public class Libreria {
         if (respuesta.toLowerCase(Locale.ROOT).equals("p")){
             System.out.println("¿Libro a prestar?");
             listaLibros();
-            String prestamo = sc.nextLine();
+            String prestamo = sc.nextLine().toLowerCase();
             libroPrestado(prestamo);
 
         } else if (respuesta.toLowerCase(Locale.ROOT).equals("d")) {
             System.out.println("¿Libro a devolver?");
             listaLibros();
-            String prestamo = sc.nextLine();
+            String prestamo = sc.nextLine().toLowerCase();
             libroDevuelto(prestamo);
         }else {
             System.out.println("La respuesta no fue adecuado solo existe p y d");
@@ -74,14 +75,14 @@ public class Libreria {
     }
 
     public void libroDevuelto(String title){
-        if(biblioteca.stream().noneMatch(libro -> libro.title().equals(title))){
+        if(biblioteca.stream().noneMatch(libro -> libro.title().toLowerCase(Locale.ROOT).equals(title))){
             System.out.println("El libro " + title + " no existe en la biblioteca. no se puede devolver algo que no existe");
-        } else if(biblioteca.stream().anyMatch(libro -> libro.title().equals(title) && libro.availability())) {
+        } else if(biblioteca.stream().anyMatch(libro -> libro.title().toLowerCase(Locale.ROOT).equals(title) && libro.availability())) {
             System.out.println("El libro " + title + " ya esta en la biblioteca. no se puede devolver algo que ya esta en la biblioteca");
         }else{
             System.out.println("El libro " + title + " ya lo puedes devolver");
             System.out.println("El libro ya se encuentra en la biblioteca, gracias.");
-            biblioteca.stream().filter(libro -> libro.title().equals(title))
+            biblioteca.stream().filter(libro -> libro.title().toLowerCase(Locale.ROOT).equals(title))
                     .findFirst()
                     .ifPresent(libro -> biblioteca.add(new Libro(libro.title(), libro.autor(), libro.year(), true)));
             biblioteca.removeIf(libro -> libro.title().equals(title) && !libro.availability());
@@ -89,34 +90,42 @@ public class Libreria {
     }
 
     public void libroPrestado(String title){
-        if(biblioteca.stream().noneMatch(libro -> libro.title().equals(title))){
+        if(biblioteca.stream().noneMatch(libro -> libro.title().toLowerCase(Locale.ROOT).equals(title))){
             System.out.println("El libro " + title + " no existe en la biblioteca.");
-        } else if(biblioteca.stream().anyMatch(libro -> libro.title().equals(title) && !libro.availability())) {
+        } else if(biblioteca.stream().anyMatch(libro -> libro.title().toLowerCase(Locale.ROOT).equals(title) && !libro.availability())) {
             System.out.println("El libro " + title + " esta prestado, vuelve mas tarde.");
         }else{
             System.out.println("El libro " + title + " se encuentra en la biblioteca.");
             System.out.println("El libro ya se encuentra en tus manos, gracias por preferirnos!");
-            biblioteca.stream().filter(libro -> libro.title().equals(title))
+            biblioteca.stream().filter(libro -> libro.title().toLowerCase(Locale.ROOT).equals(title))
                     .findFirst()
                     .ifPresent(libro -> biblioteca.add(new Libro(libro.title(), libro.autor(), libro.year(), false)));
-            biblioteca.removeIf(libro -> libro.title().equals(title) && libro.availability());
+            biblioteca.removeIf(libro -> libro.title().toLowerCase(Locale.ROOT).equals(title) && libro.availability());
         }
     }
 
     public void mostrarEstadisticas(){
-        int[] totalEstadisticas = {0,0};
-
-        biblioteca.forEach(libro -> {
-            if(libro.availability()){
-                totalEstadisticas[0]++;
-            }else{
-                totalEstadisticas[1]++;
-            }
-        });
+        List<Integer> totalEstadisticas = Arrays.asList(0,0);
+        List<Boolean> listaLibros = biblioteca.stream().map(Libro::availability).collect(Collectors.toList());
+        totalEstadisticas = estadisticasRecursividad(totalEstadisticas, listaLibros);
 
         System.out.println("Estadisticas: \n" +
-                "Total de libros prestados: " + totalEstadisticas[1] + " \n " +
-                "Total de libros disponibles: " + totalEstadisticas[0] + "\n");
+                "Total de libros prestados: " + totalEstadisticas.getFirst() + " \n " +
+                "Total de libros disponibles: " + totalEstadisticas.getLast() + "\n");
+    }
+
+    public List<Integer> estadisticasRecursividad(List<Integer> listaEstadisticas, List<Boolean> listaLibros){
+        if(listaLibros.isEmpty()){
+            return listaEstadisticas;
+        }
+
+        if(listaLibros.getFirst()) {
+            listaEstadisticas.set(0, listaEstadisticas.getFirst() + 1);
+        }else{
+            listaEstadisticas.set(1, listaEstadisticas.getLast() + 1);
+        }
+
+        return estadisticasRecursividad(listaEstadisticas, listaLibros.subList(1, listaLibros.size()));
     }
 
     public void menu(){
@@ -149,8 +158,6 @@ public class Libreria {
     }
 
     public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-
         Libreria libreria = new Libreria();
         Libro libro = new Libro("Clean code", "Robert Cecil Martin", 2008, true);
         Libro libro2 = new Libro("El psicoanalista", "John Katzenbach", 2002, true);
